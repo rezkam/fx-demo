@@ -1,4 +1,4 @@
-package main
+package echo
 
 import (
 	"io"
@@ -6,19 +6,18 @@ import (
 	"net/http"
 )
 
-// Echo handler is an http.Handler that copies its request body
-// to its response body.
-type EchoHandler struct {
+// Handler is an http.Handler that copies its request body to its response body.
+type Handler struct {
 	logger *slog.Logger
 }
 
-// NewEchoHandler constructs a new EchoHandler.
-func NewEchoHandler(logger *slog.Logger) *EchoHandler {
-	return &EchoHandler{logger: logger}
+// NewHandler constructs a new Handler.
+func NewHandler(logger *slog.Logger) *Handler {
+	return &Handler{logger: logger}
 }
 
 // ServeHTTP handles incoming HTTP requests.
-func (e *EchoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (e *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Check if the request body is empty
 	if r.ContentLength == 0 {
 		// Respond with a 400 Bad Request status code and error message
@@ -42,6 +41,6 @@ func (e *EchoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	e.logger.Info("request handled", "method", r.Method, "url", r.URL)
 }
 
-func (*EchoHandler) Pattern() string {
+func (*Handler) Pattern() string {
 	return "/echo"
 }

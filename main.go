@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
+	"github.com/rezkam/fx-demo/hello"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 
+	"github.com/rezkam/fx-demo/echo"
+	"github.com/rezkam/fx-demo/route"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )
@@ -23,15 +27,15 @@ func main() {
 			// order of the constructors given to fx.Provide does *not* matter.
 			NewHTTPServer,
 			fx.Annotate(
-				NewServeMux,
+				route.NewServeMux,
 				fx.ParamTags(`group:"routes"`),
 			),
-			AsRoute(NewEchoHandler),
+			AsRoute(echo.NewHandler),
 			// Fx does not allow two constructors to provide the same type without annotating them.
-			// Here we need to annotate the NewHelloHandler and NewEchoHandler constructors to distinguish them.
+			// Here we need to annotate the NewHandler and NewHandler constructors to distinguish them.
 			// using fx.ResultTag
 			NewJSONLogger,
-			AsRoute(NewHelloHandler),
+			AsRoute(hello.NewHandler),
 		),
 		// fx.Invoke used to request that the HTTP Server always instantiated
 		// even if none of the other components in the application reference it directly.
@@ -60,8 +64,12 @@ func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, logger *slog.Logger) *ht
 				return err
 			}
 			logger.Info("Starting HTTP server", "addr", srv.Addr)
-			//hooks must not block to run a long-running task synchronously so we run the server in a goroutine.
-			go srv.Serve(ln)
+			//hooks must not block to run a long-running task synchronously, so we run the server in a goroutine.
+			go func() {
+				if err := srv.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
+					logger.Error("HTTP server stopped", "error", err)
+				}
+			}()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
@@ -74,31 +82,30 @@ func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, logger *slog.Logger) *ht
 	return srv
 }
 
-/* 	Aplication Lifecycle
-Has two main phases: initialization and execution and both are comprised of multiple steps.
+/* 	The Application Lifecycle
+Has two main phases: initialization and execution, and both consist of multiple steps.
 Initialization:
 1. Register all constructors passed to fx.Provide.
 2. Register all decorators passed to fx.Decorate.
-3. Run all functions passed to fx.Invoke (calliing constructors and decorators as needed).
+3. Run all functions passed to fx.Invoke (calling constructors and decorators as needed).
 Execution:
 1. Run all hooks appended to the application by providers, decorators, or invoke functions.
 2. Wait for a signal to stop running
 3. Run all shutdown hooks appended to the application.
 
-Lifecycle Hooks
-Lifecycle hooks provide the ability to schedule work to be executed by Fx when the application starts or stops.
+Lifecycle Hooks provide the ability to schedule work to be executed by Fx when the application starts or stops.
 Kinds of hooks:
 1. Startup hooks also called OnStart hooks these are run in the order they are added.
 2. Shutdown hooks also called OnStop hooks these are run in reverse order they were appended.
 
 Hooks must not block to run long-running tasks synchronously.
-hooks should schedule long-running tasks to run in the background goroutines.
-shutdown hooks should stop the background work started by the startup hooks.
+Hooks should schedule long-running tasks to run in the background goroutines.
+Shutdown hooks should stop the background work started by the startup hooks.
 */
 
 // Value Group
-// Is a collection of values that are all of the same type.
-// Any number of constructors across an Fx application can feed values to a group.
+// Is a collection of values that are all the same type.
+// Any number of constructors across Fx application can feed values to a group.
 // Similarly, any number of consumers can consume values from a group.
 // Here we defined the group "routes" to hold all the Route instances.
 // Handlers are annotated with the group tag to indicate that they should be added to the group.
@@ -110,7 +117,7 @@ shutdown hooks should stop the background work started by the startup hooks.
 func AsRoute(f any) any {
 	return fx.Annotate(
 		f,
-		fx.As(new(Route)),
+		fx.As(new(route.Route)),
 		fx.ResultTags(`group:"routes"`),
 	)
 }

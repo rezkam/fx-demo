@@ -1,4 +1,4 @@
-package main
+package hello
 
 import (
 	"fmt"
@@ -7,19 +7,19 @@ import (
 	"net/http"
 )
 
-type HelloHandler struct {
+type Handler struct {
 	logger *slog.Logger
 }
 
-func NewHelloHandler(logger *slog.Logger) *HelloHandler {
-	return &HelloHandler{logger: logger}
+func NewHandler(logger *slog.Logger) *Handler {
+	return &Handler{logger: logger}
 }
 
-func (*HelloHandler) Pattern() string {
+func (*Handler) Pattern() string {
 	return "/hello"
 }
 
-func (h *HelloHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
