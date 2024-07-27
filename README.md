@@ -19,7 +19,7 @@ Fx is primarily intended to be used for long-running server applications.
 3. Run the following command to build and run the application:
 
 ```bash
-go run .
+go run github.com/rezkam/fx-demo/cmd/server
 ```
 
 ## Code Structure
