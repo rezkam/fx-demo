@@ -22,9 +22,16 @@ func main() {
 		fx.Provide(
 			// order of the constructors given to fx.Provide does *not* matter.
 			NewHTTPServer,
-			NewServeMux,
-			NewEchoHandler,
+			fx.Annotate(
+				NewServeMux,
+				fx.ParamTags(`group:"routes"`),
+			),
+			AsRoute(NewEchoHandler),
+			// Fx does not allow two constructors to provide the same type without annotating them.
+			// Here we need to annotate the NewHelloHandler and NewEchoHandler constructors to distinguish them.
+			// using fx.ResultTag
 			NewJSONLogger,
+			AsRoute(NewHelloHandler),
 		),
 		// fx.Invoke used to request that the HTTP Server always instantiated
 		// even if none of the other components in the application reference it directly.
@@ -88,3 +95,22 @@ Hooks must not block to run long-running tasks synchronously.
 hooks should schedule long-running tasks to run in the background goroutines.
 shutdown hooks should stop the background work started by the startup hooks.
 */
+
+// Value Group
+// Is a collection of values that are all of the same type.
+// Any number of constructors across an Fx application can feed values to a group.
+// Similarly, any number of consumers can consume values from a group.
+// Here we defined the group "routes" to hold all the Route instances.
+// Handlers are annotated with the group tag to indicate that they should be added to the group.
+// The NewServeMux constructor is annotated with the ParamTags("group:routes") to indicate that it should receive all the Route instances.
+// The order of values in a group is not guaranteed so do not rely on the order of values in a group.
+
+// AsRoute annotates the given constructor to state that
+// it provides a route to the "routes" group.
+func AsRoute(f any) any {
+	return fx.Annotate(
+		f,
+		fx.As(new(Route)),
+		fx.ResultTags(`group:"routes"`),
+	)
+}

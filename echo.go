@@ -41,3 +41,7 @@ func (e *EchoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Log the successful handling of the request
 	e.logger.Info("request handled", "method", r.Method, "url", r.URL)
 }
+
+func (*EchoHandler) Pattern() string {
+	return "/echo"
+}
