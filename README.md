@@ -76,3 +76,18 @@ A value group is a collection of values that are all the same type. Any number o
 
 **Note:** The order of values in a group is not guaranteed, so do not rely on it.
 
+
+## My learning and thoughts
+**Strengths:**
+
+* **Reflection-based:** Fx leverages reflection at runtime to wire dependencies. This makes it easier to get started with and requires less boilerplate code.
+* **Dynamic:** Fx allows for more dynamic behavior, enabling you to provide dependencies on the fly and modify the dependency graph at runtime.
+* **Lifecycle Management:** Offers robust lifecycle management features, allowing you to define startup and shutdown logic for your components.
+* **Extensible:** Provides hooks and plugins for extending its functionality.
+* **Good for large, complex applications:** Its flexibility and dynamic nature make it suitable for large projects with evolving requirements.
+
+**Weaknesses:**
+
+* **Reflection Overhead:** Using reflection can introduce some runtime overhead compared to code generation approaches.
+* **Less Compile-Time Safety:** Since wiring happens at runtime, errors in dependency configuration might only surface during execution.
+* **Steeper Learning Curve:** The dynamic and flexible nature might be overwhelming for simpler projects and require more time to master.
